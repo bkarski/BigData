@@ -1,0 +1,113 @@
+20190324 Niedziela 
+
+http://hdpoc1.bigdatapassion.com:8080/#/login
+l: student
+h: student123
+
+apached bigtop - 
+
+
+ssh karolzdunczyk@hdpoc1.bigdatapassion.com
+h:karolzdunczyk
+
+
+Polecenia
+hdfs dfs -ls /
+hdfs dfs -mkdir pw
+hdfs dfs -cp /dane/lektury/lektury-100/antek.txt pw
+
+hdfs dfs -get pw/antek.txt .
+hdfs dfs -put antek.txt pw/antek2.txt
+
+
+hdfs dfs -setrep 3 pw/antek.txt
+hdfs dfs -setrep 3 /user/karolzdunczyk
+
+tree
+
+hdfs dfs -setrep -w 3 pw/antek.txt
+hdfs dfs -setrep -w 3 pw
+
+
+Erasure coding
+hdfs ec -listPolicies
+hdfs ec -setPolicy -path pw -policy RS-3-2-1024k
+
+dane dzielone na 1024 bierzemy 3 kawałki i generujemy 2 sumy konstrolne minimum 5 maszyn.
+
+
+hdfs dfs -rm -skipTrash pw/antek.txt
+
+hdfs dfs -du -h /user/karolzdunczyk
+hdfs dfs -du -h -s /user/karolzdunczyk
+
+hdfs dfs -mkdir snap
+
+
+
+hdfs dfsadmin -allowsnapshot /user/karolzdunczyk/snap
+hdfs dfs -createSnapshot snap
+
+
+hdfs dfs -rm -skipTrash snap/lektury-100/antek.txt
+hdfs dfs -cp snap/lektury-100/balladyna.txt snap/lektury-100/balladyna2.txt
+hdfs dfs -ls snap/lektury-100
+
+
+hdfs dfs -ls snap/lektury-100 | grep antek.tx
+
+wyszukiwanie w snapshot
+hdfs dfs -ls snap/.snapshot/s20190324-132218.018/lektury-100 | grep antek.t
+
+
+[karolzdunczyk@hdpoc1 ~]$ hdfs snapshotDiff snap s20190324-132218.018 .
+Difference between snapshot s20190324-132218.018 and current directory under directory /user/karolzdunczyk/snap:
+M	./lektury-100
++	./lektury-100/balladyna2.txt
+-	./lektury-100/antek.txt
+
+
+lista snapshot-ów
+hdfs dfs -ls /user/karolzdunczyk/snap/.snapshot
+
+
+
+
+HIVE
+
+beeline
+karolzdunczyk
+karolzdunczyk
+
+use movielens;
+show tables;
+
+select * from movies limit 10;
+describe movies
+
+
+create database karolzdunczyk;
+use karolzdunczyk;
+
+create EXTERNAL table politechnika (a INT);
+show tables;
+drop table politechnika;
+
+
+CREATE EXTERNAL TABLE IF NOT EXISTS movies (MovieID INT,Title STRING,Genres STRING)ROW FORMAT DELIMITED FIELDS TERMINATED BY '@';
+
+
+hdfs dfs -cp /dane/movielens /user/karolzdunczyk/
+
+
+
+
+dfs -cp -f /dane  /user/karolzdunczyk/;
+LOAD DATA INPATH '/user/karolzdunczyk/movielens/hive/movies/movies.dat' OVERWRITE INTO TABLE movies;
+
+
+
+
+
+
+
