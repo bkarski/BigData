@@ -283,3 +283,504 @@ db.movies.find({directed_by : "George Lucas"}).pretty()
 db.movies.find({directed_by : "George Lucas"}, {$add}).pretty()
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------
+
+
+
+
+20190518
+
+
+db.movies.aggregate([
+{$match : {"directed_by" : "George Lucas"}},
+{$project : {tytul : "$name", przychod_brutto : "$gross_revenue.amount", koszt_produkcji : "$estimated_budget.amount", _id : 0 }},
+{$addFields : {"zysk" : {$subtract : ["$przychod_brutto", "$koszt_produkcji"]}}},
+{$group : {_id : null, sredni_zysk :  {$avg : "$zysk"}}}
+])
+
+
+
+
+db.movies.aggregate([
+{$project : {tytul : "$name", przychod_brutto : "$gross_revenue.amount", koszt_produkcji : "$estimated_budget.amount", _id : 0 }},
+{$addFields : {"zysk" : {$subtract : ["$przychod_brutto", "$koszt_produkcji"]}}},
+{$group : {_id : null, sredni_zysk :  {$avg : "$zysk"}}}
+])
+
+
+db.movies.aggregate([
+{$match : {"name" : "Star Wars"}},
+{$unwind : "$genre"}
+])
+
+
+
+db.movies.aggregate([
+{$group : {_id : null, ilosc : {$sum : 1}}}
+])
+
+
+
+db.movies.aggregate([
+{$group : {_id : "$directed_by", ilosc_filmow : {$sum : 1}}},
+{$sort : {ilosc_filmow : -1}}
+])
+
+
+
+db.movies.aggregate([
+{$unwind : "$genre"},
+{$group : {_id : "$genre" }},
+{$group : {_id : null, suma :  {$sum : 1}}}
+])
+
+
+
+db.movies.aggregate([
+{$project : {genre : 1, _id : 0}},
+{$unwind : "$genre"} ,
+{$group : {_id : "$genre", ilosc : {$sum : 1}}},
+{$sort : {ilosc : -1}}
+])
+
+
+
+db.movies.aggregate(
+[
+{$project : {genre : 1, _id : 0}},
+{$unwind : "$genre"} ,
+{$group : {_id : "$genre"}},
+{$facet : {
+    gatunku : [{$project : {_id : 1}}],
+    ilosc_gatunkow : [{$group : {_id : null, ilosc :  {$sum : 1}}}]
+    }}
+])
+
+
+
+
+db.movies.aggregate([
+{$sample : {size : 3}},
+{$project : {genre : 1, _id : 0}},
+])
+
+
+
+
+
+//1
+db.movies.aggregate([
+{$unwind : "$starring"},  //rozpakowanie tablicy starring
+{$group : {_id : "$starring.actor", ilosc_filmow : {$sum : 1}}}, //
+{$sort : {ilosc_filmow : -1}},
+{$limit : 20}
+])
+
+
+//2
+db.movies.aggregate([
+{$unwind : "$directed_by"},
+{$project : {tytul : "$name", directed_by : 1, przychod_brutto : "$gross_revenue.amount", koszt_produkcji : "$estimated_budget.amount", _id : 0 }},
+{$addFields : {"zysk" : {$subtract : ["$przychod_brutto", "$koszt_produkcji"]}}},
+{$group : {_id : "$directed_by", sredni_zysk :  {$avg : "$zysk"}}},
+{$sort : {sredni_zysk : -1}},
+{$limit : 20}
+])
+
+lub
+
+db.movies.aggregate([
+{$unwind : "$directed_by"},
+{$group : {_id : "$directed_by", sredni_zysk :  {$avg : "$gross_revenue.amount"}}},
+{$sort : {sredni_zysk : -1}},
+{$limit : 20}
+])
+
+
+//3
+db.movies.aggregate([
+{$addFields : {zysk : {$subtract : ["$gross_revenue.amount", "$estimated_budget.amount"]}}},
+{$unwind : "$genre"},
+{$group : {_id : "$genre", sredni_zysk :  {$avg : "$zysk"}}},
+{$limit : 5}
+])
+
+
+//4
+db.movies.aggregate([
+{$addFields : {zysk : {$subtract : ["$gross_revenue.amount", "$estimated_budget.amount"]}}},
+{$sort : {zysk : -1}},
+{$limit : 5}
+])
+
+
+//5
+db.movies.aggregate([
+{$project : {genre : 1,starring : 1 , _id : 0 }},
+{$unwind : "$starring"},
+{$unwind : "$genre"},
+{$group : {_id : {aktor : "$starring.actor", gatunek : "$genre", wystepy : {$sum : 1}}}},
+{$sort : {sredni_zysk : -1}},
+])
+
+
+
+
+
+-------Replica Set
+
+
+1. cel zduplikowanie istniejecej bazy danych(movies) z 1 serwera zrobimy 3;
+1. schemat: Primary, Secondary i Artbiter
+
+
+3.Wykonanie
+- Stworzyć katalogi: db2, db3
+-uruchomić 3 serwery z danymi z flagą --replSet na portach 27017, 27018, 27019 oraz dbPath db, db2, db3
+
+ctrl + C
+
+
+cd mongodb-linux-x86_64-ubuntu1604-4.0.9/bin/
+
+#Uruchomienie
+./mongod --dbpath db --port 27017 --replSet rs1
+./mongod --dbpath db2 --port 27018 --replSet rs1
+./mongod --dbpath db3 --port 27019 --replSet rs1
+
+
+#Konsola
+./mongo
+
+
+
+
+> rs.status()
+{
+	"operationTime" : Timestamp(0, 0),
+	"ok" : 0,
+	"errmsg" : "no replset config has been received",
+	"code" : 94,
+	"codeName" : "NotYetInitialized",
+	"$clusterTime" : {
+		"clusterTime" : Timestamp(0, 0),
+		"signature" : {
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+			"keyId" : NumberLong(0)
+		}
+	}
+}
+>
+
+
+
+> rs.initiate()
+{
+	"info2" : "no configuration specified. Using a default configuration for the set",
+	"me" : "localhost:27017",
+	"ok" : 1,
+	"operationTime" : Timestamp(1558187016, 1),
+	"$clusterTime" : {
+		"clusterTime" : Timestamp(1558187016, 1),
+		"signature" : {
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+			"keyId" : NumberLong(0)
+		}
+	}
+}
+rs1:SECONDARY> 
+
+
+rs1:PRIMARY> rs.add("localhost:27018")
+{
+	"ok" : 1,
+	"operationTime" : Timestamp(1558187169, 1),
+	"$clusterTime" : {
+		"clusterTime" : Timestamp(1558187169, 1),
+		"signature" : {
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+			"keyId" : NumberLong(0)
+		}
+	}
+}
+rs1:PRIMARY> 
+
+
+rs1:PRIMARY> rs.addArb("localhost:27019")
+{
+	"ok" : 1,
+	"operationTime" : Timestamp(1558187272, 1),
+	"$clusterTime" : {
+		"clusterTime" : Timestamp(1558187272, 1),
+		"signature" : {
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+			"keyId" : NumberLong(0)
+		}
+	}
+}
+
+
+
+rs1:PRIMARY> rs.status()
+{
+	"set" : "rs1",
+	"date" : ISODate("2019-05-18T13:50:27.486Z"),
+	"myState" : 1,
+	"term" : NumberLong(1),
+	"syncingTo" : "",
+	"syncSourceHost" : "",
+	"syncSourceId" : -1,
+	"heartbeatIntervalMillis" : NumberLong(2000),
+	"optimes" : {
+		"lastCommittedOpTime" : {
+			"ts" : Timestamp(1558187418, 1),
+			"t" : NumberLong(1)
+		},
+		"readConcernMajorityOpTime" : {
+			"ts" : Timestamp(1558187418, 1),
+			"t" : NumberLong(1)
+		},
+		"appliedOpTime" : {
+			"ts" : Timestamp(1558187418, 1),
+			"t" : NumberLong(1)
+		},
+		"durableOpTime" : {
+			"ts" : Timestamp(1558187418, 1),
+			"t" : NumberLong(1)
+		}
+	},
+	"lastStableCheckpointTimestamp" : Timestamp(1558187378, 1),
+	"members" : [
+		{
+			"_id" : 0,
+			"name" : "localhost:27017",
+			"health" : 1,
+			"state" : 1,
+			"stateStr" : "PRIMARY",
+			"uptime" : 1235,
+			"optime" : {
+				"ts" : Timestamp(1558187418, 1),
+				"t" : NumberLong(1)
+			},
+			"optimeDate" : ISODate("2019-05-18T13:50:18Z"),
+			"syncingTo" : "",
+			"syncSourceHost" : "",
+			"syncSourceId" : -1,
+			"infoMessage" : "",
+			"electionTime" : Timestamp(1558187017, 1),
+			"electionDate" : ISODate("2019-05-18T13:43:37Z"),
+			"configVersion" : 3,
+			"self" : true,
+			"lastHeartbeatMessage" : ""
+		},
+		{
+			"_id" : 1,
+			"name" : "localhost:27018",
+			"health" : 1,
+			"state" : 2,
+			"stateStr" : "SECONDARY",
+			"uptime" : 258,
+			"optime" : {
+				"ts" : Timestamp(1558187418, 1),
+				"t" : NumberLong(1)
+			},
+			"optimeDurable" : {
+				"ts" : Timestamp(1558187418, 1),
+				"t" : NumberLong(1)
+			},
+			"optimeDate" : ISODate("2019-05-18T13:50:18Z"),
+			"optimeDurableDate" : ISODate("2019-05-18T13:50:18Z"),
+			"lastHeartbeat" : ISODate("2019-05-18T13:50:26.287Z"),
+			"lastHeartbeatRecv" : ISODate("2019-05-18T13:50:26.286Z"),
+			"pingMs" : NumberLong(0),
+			"lastHeartbeatMessage" : "",
+			"syncingTo" : "localhost:27017",
+			"syncSourceHost" : "localhost:27017",
+			"syncSourceId" : 0,
+			"infoMessage" : "",
+			"configVersion" : 3
+		},
+		{
+			"_id" : 2,
+			"name" : "localhost:27019",
+			"health" : 1,
+			"state" : 7,
+			"stateStr" : "ARBITER",
+			"uptime" : 155,
+			"lastHeartbeat" : ISODate("2019-05-18T13:50:26.287Z"),
+			"lastHeartbeatRecv" : ISODate("2019-05-18T13:50:26.425Z"),
+			"pingMs" : NumberLong(0),
+			"lastHeartbeatMessage" : "",
+			"syncingTo" : "",
+			"syncSourceHost" : "",
+			"syncSourceId" : -1,
+			"infoMessage" : "",
+			"configVersion" : 3
+		}
+	],
+	"ok" : 1,
+	"operationTime" : Timestamp(1558187418, 1),
+	"$clusterTime" : {
+		"clusterTime" : Timestamp(1558187418, 1),
+		"signature" : {
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+			"keyId" : NumberLong(0)
+		}
+	}
+}
+
+
+
+
+
+rs.remove
+
+
+
+use test
+db.users.insert({name : "restest", age : 27})
+
+
+
+db.getCollection('oplog.rs').find({op: "i"})
+
+
+ ./mongo --port 27018 
+
+rs1:PRIMARY> rs.status()
+{
+	"set" : "rs1",
+	"date" : ISODate("2019-05-18T14:10:47.717Z"),
+	"myState" : 1,
+	"term" : NumberLong(3),
+	"syncingTo" : "",
+	"syncSourceHost" : "",
+	"syncSourceId" : -1,
+	"heartbeatIntervalMillis" : NumberLong(2000),
+	"optimes" : {
+		"lastCommittedOpTime" : {
+			"ts" : Timestamp(1558188468, 1),
+			"t" : NumberLong(1)
+		},
+		"readConcernMajorityOpTime" : {
+			"ts" : Timestamp(1558188468, 1),
+			"t" : NumberLong(1)
+		},
+		"appliedOpTime" : {
+			"ts" : Timestamp(1558188640, 1),
+			"t" : NumberLong(3)
+		},
+		"durableOpTime" : {
+			"ts" : Timestamp(1558188640, 1),
+			"t" : NumberLong(3)
+		}
+	},
+	"lastStableCheckpointTimestamp" : Timestamp(1558188468, 1),
+	"members" : [
+		{
+			"_id" : 0,
+			"name" : "localhost:27017",
+			"health" : 0,
+			"state" : 8,
+			"stateStr" : "(not reachable/healthy)",
+			"uptime" : 0,
+			"optime" : {
+				"ts" : Timestamp(0, 0),
+				"t" : NumberLong(-1)
+			},
+			"optimeDurable" : {
+				"ts" : Timestamp(0, 0),
+				"t" : NumberLong(-1)
+			},
+			"optimeDate" : ISODate("1970-01-01T00:00:00Z"),
+			"optimeDurableDate" : ISODate("1970-01-01T00:00:00Z"),
+			"lastHeartbeat" : ISODate("2019-05-18T14:10:46.821Z"),
+			"lastHeartbeatRecv" : ISODate("2019-05-18T14:07:56.465Z"),
+			"pingMs" : NumberLong(0),
+			"lastHeartbeatMessage" : "Error connecting to localhost:27017 (127.0.0.1:27017) :: caused by :: Connection refused",
+			"syncingTo" : "",
+			"syncSourceHost" : "",
+			"syncSourceId" : -1,
+			"infoMessage" : "",
+			"configVersion" : -1
+		},
+		{
+			"_id" : 1,
+			"name" : "localhost:27018",
+			"health" : 1,
+			"state" : 1,
+			"stateStr" : "PRIMARY",
+			"uptime" : 2269,
+			"optime" : {
+				"ts" : Timestamp(1558188640, 1),
+				"t" : NumberLong(3)
+			},
+			"optimeDate" : ISODate("2019-05-18T14:10:40Z"),
+			"syncingTo" : "",
+			"syncSourceHost" : "",
+			"syncSourceId" : -1,
+			"infoMessage" : "",
+			"electionTime" : Timestamp(1558188488, 1),
+			"electionDate" : ISODate("2019-05-18T14:08:08Z"),
+			"configVersion" : 3,
+			"self" : true,
+			"lastHeartbeatMessage" : ""
+		},
+		{
+			"_id" : 2,
+			"name" : "localhost:27019",
+			"health" : 1,
+			"state" : 7,
+			"stateStr" : "ARBITER",
+			"uptime" : 1375,
+			"lastHeartbeat" : ISODate("2019-05-18T14:10:46.705Z"),
+			"lastHeartbeatRecv" : ISODate("2019-05-18T14:10:46.706Z"),
+			"pingMs" : NumberLong(0),
+			"lastHeartbeatMessage" : "",
+			"syncingTo" : "",
+			"syncSourceHost" : "",
+			"syncSourceId" : -1,
+			"infoMessage" : "",
+			"configVersion" : 3
+		}
+	],
+	"ok" : 1,
+	"operationTime" : Timestamp(1558188640, 1),
+	"$clusterTime" : {
+		"clusterTime" : Timestamp(1558188640, 1),
+		"signature" : {
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+			"keyId" : NumberLong(0)
+		}
+	}
+}
+rs1:PRIMARY> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
