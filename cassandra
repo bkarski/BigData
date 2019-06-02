@@ -1,0 +1,258 @@
+Docker 02.06.2019
+
+foundation db
+
+docker pull cassandra
+
+#tagi
+docker pull cassandra:latest
+
+docker image ls
+docker ps -a
+docker rm id???
+
+
+docker run -d --name cas1 cassandra
+-d -uruchomienie w tle
+docker stats
+
+#wyłaczenie bez kasowania
+docker stop cas1
+
+
+docker start cas1
+
+docker exec -it cas1 /bin/bash
+-it obowiazkowo 
+
+
+
+ss -ntlp
+9042 
+7000 klaster pomieczy węzłami komunikuje sie
+7199 informacja o statusie
+
+
+
+
+nodetool status
+
+
+
+root@2c76b1595d0a:/# nodetool info
+ID                     : 7f38bb51-f7c8-4302-9f31-b2fa628ec9ad
+Gossip active          : true
+Thrift active          : false
+Native Transport active: true
+Load                   : 160.41 KiB
+Generation No          : 1559461844
+Uptime (seconds)       : 1167
+Heap Memory (MB)       : 281.95 / 1926.00
+Off Heap Memory (MB)   : 0.00
+Data Center            : datacenter1
+Rack                   : rack1
+Exceptions             : 0
+Key Cache              : entries 11, size 896 bytes, capacity 96 MiB, 84 hits, 101 requests, 0.832 recent hit rate, 14400 save period in seconds
+Row Cache              : entries 0, size 0 bytes, capacity 0 bytes, 0 hits, 0 requests, NaN recent hit rate, 0 save period in seconds
+Counter Cache          : entries 0, size 0 bytes, capacity 48 MiB, 0 hits, 0 requests, NaN recent hit rate, 7200 save period in seconds
+Chunk Cache            : entries 19, size 1.19 MiB, capacity 449 MiB, 33 misses, 151 requests, 0.781 recent hit rate, NaN microseconds miss latency
+Percent Repaired       : 100.0%
+Token                  : (invoke with -T/--tokens to see all 256 tokens)
+
+
+
+
+
+trift stary interfejs komunikacji cassandy od którego się odchodzi.
+
+
+
+
+Visual VM
+7199
+
+
+wget temp.thera.be/cas/ex1.txt
+
+#w przeglądarce
+temp.thera.be/cas/ex1.txt
+
+
+kzdunczy@loch-70 ~ % cat ex1.txt
+CREATE TABLE scores
+(
+  user TEXT,
+  game TEXT,
+  year INT,
+  month INT,
+  day INT,
+  score INT,
+  PRIMARY KEY (user, game, year, month, day)
+);
+
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 05, 01, 4000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 05, 03, 1750);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('yukim', 'Coup', 2015, 05, 03, 2250);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 05, 03, 500);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('jmckenzie', 'Coup', 2015, 06, 01, 2000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('iamaleksey', 'Coup', 2015, 06, 01, 2500);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 06, 02, 1000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 06, 02, 2000);
+
+
+
+
+ CREATE KEYSPACE ex1 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+use ex1;
+
+CREATE TABLE scores
+(
+  user TEXT,
+  game TEXT,
+  year INT,
+  month INT,
+  day INT,
+  score INT,
+  PRIMARY KEY (user, game, year, month, day)
+);
+
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 05, 01, 4000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 05, 03, 1750);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('yukim', 'Coup', 2015, 05, 03, 2250);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 05, 03, 500);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('jmckenzie', 'Coup', 2015, 06, 01, 2000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('iamaleksey', 'Coup', 2015, 06, 01, 2500);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 06, 02, 1000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 06, 02, 2000);
+
+
+
+
+
+select * from scores
+select * from ex1.scores
+
+select * from ex1.scores where user='pcmanus' and year=2015 and month=5 and day=1 ALLOW FILTERING;
+
+
+
+select * from ex1.scores where user='pcmanus' and game='Coup'and  year=2015 and month=5 and day=1 ALLOW FILTER
+
+
+
+
+UPDATE scores SET score = 6000 WHERE user='pcmanus' and game='Coup'and year=2015 and month=5 and day=1;
+
+
+
+DELETE FROM scores WHERE user='pcmanus' and game='Coup'and year=2015 and month=5 and day=60;
+cqlsh:ex1> select * from ex1.scores WHERE user='pcman
+
+
+ALTER TABLE scores ADD fails int;
+UPDATE scores SET fails = 10 WHERE user='pcmanus' and game='Coup'and year=2015 and month=5 and day=1;
+
+select * from ex1.scores WHERE user='pcma
+
+
+
+select * from ex1.scores WHERE user='pcmanus' and game>='Coup';
+
+
+
+
+
+
+
+
+
+
+
+
+ctrl + D
+root@2c76b1595d0a:/# nodetool ring
+
+root@2c76b1595d0a:/# nodetool ring | grep Normal | wc -l
+256
+
+cqlsh:ex1> CONSISTENCY ONE 
+
+
+CREATE TABLE kolekcje (user text PRIMARY KEY, emails list<text>, phone map<text, text>, medale set<text>);
+
+
+UPDATE kolekcje SET emails=['pcmanus@sportowcy.pl'] where user ='pcmanus';
+select * from kolekcje;
+
+
+UPDATE kolekcje SET emails= emails + ['pcmanus@sportowcy.pl'] where user ='pcmanus';
+select * from kolekcje;
+
+
+UPDATE kolekcje SET medale={'Gold Sochi'} where user = 'pcmanus';
+
+
+UPDATE kolekcje SET medale= medale + {'Gold Sochi'} where user = 'pcmanus' ;
+UPDATE kolekcje SET medale= medale + {'Gold Sochi'} where user = 'pcmanus' ;
+UPDATE kolekcje SET medale= medale + {'Gold Sochi'} where user = 'pcmanus' ;
+
+
+UPDATE kolekcje SET phone= {'wrk': '234234423', 'home': '326546456456'} where user = 'pcmanus' ;
+
+
+
+
+
+
+
+UPDATE kolekcje SET phone['ice']='123456763' where user = 'pcmanus' ;
+
+UPDATE kolekcje SET phone['ice']='45645645645663' where user = 'pcmanus' ;
+
+
+
+
+
+create TABLE liczniki (user text PRIMARY KEY,score counter, fails counter);
+
+
+UPDATE liczniki SET score = score +1 where user = 'pcmanus' ;
+select * from liczniki;
+
+ user    | fails | score
+---------+-------+-------
+ pcmanus |  null |     9
+
+
+UPDATE liczniki SET fails+=10, score = score + 100  where user = 'pcmanus' ;
+
+
+select * from liczniki;
+
+ user    | fails | score
+---------+-------+-------
+ pcmanus |    10 |   109
+
+
+
+
+root@2c76b1595d0a:/# sstableutil ex1 scores
+
+root@2c76b1595d0a:/# sstabledump /var/lib/cassandra/data/ex1/scores-d4e08b80850f11e981f16d2c86545d91/md-1-big-CompressionInfo.db
+
+
+
+apt instal jq
+
+
+
+
+
+
+
+
+
+
+
+
