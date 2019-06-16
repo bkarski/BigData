@@ -254,5 +254,182 @@ apt instal jq
 
 
 
+20190616
+
+
+
+
+docker run -d --name cas1 cassandra
+docker exec -it cas1 /bin/bash
+nodetool status
+
+docker run -d --name cas1 cqlsh
+lub
+cqlsh
+
+cqlsh> CREATE KEYSPACE ex1 WITH replication = {'class': 'SimpleStrategy', 'replication_factor':1};
+
+
+root@f7b1b5662eac:/# temp.thera.be/cas/ex1.txt
+
+cqlsh> use ex1;
+
+CREATE TABLE scores
+(
+  user TEXT,
+  game TEXT,
+  year INT,
+  month INT,
+  day INT,
+  score INT,
+  PRIMARY KEY (user, game, year, month, day)
+);
+
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 05, 01, 4000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 05, 03, 1750);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('yukim', 'Coup', 2015, 05, 03, 2250);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 05, 03, 500);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('jmckenzie', 'Coup', 2015, 06, 01, 2000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('iamaleksey', 'Coup', 2015, 06, 01, 2500);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 06, 02, 1000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 06, 02, 2000);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('jmanor', 'Coup', 2018, 05, 03, 20);
+INSERT INTO scores (user, game, year, month, day, score) VALUES ('cfranken', 'Coup', 2017, 02, 03, 20);
+
+
+
+
+
+
+
+root@f7b1b5662eac:/# watch -n2 nodetool status
+
+
+
+nowy terminal
+% docker run -d --name cas2 -e CASSANDRA_SEEDS=172.17.0.2 cassandra
+
+ nodetool ring
+
+kzdunczy@loch-70 ~ % docker exec -it cas1 /bin/bash  
+cqlsh> ALTER KEYSPACE ex1 WITH replication = {'class': 'SimpleStrategy', 'replication_factor':2};
+
+
+
+cqlsh> ALTER KEYSPACE ex1 WITH replication = {'class': 'SimpleStrategy', 'replication_factor':1};
+
+
+
+
+
+root@f7b1b5662eac:/# nodetool cleanup
+
+#zrzucenie memtable z pamieci do dysku
+root@f7b1b5662eac:/# nodetool flush 
+
+root@f7b1b5662eac:/# cassandra-stress write n=10000
+
+
+
+
+
+
+
+kzdunczy@loch-70 ~ % docker exec -it cas1 nodetool flush
+kzdunczy@loch-70 ~ % docker exec -it cas2 nodetool fl
+
+
+root@f7b1b5662eac:/# nodetool status
+Datacenter: datacenter1
+=======================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address     Load       Tokens       Owns (effective)  Host ID                               Rack
+DN  172.17.0.3  12.21 MiB  256          50.4%             5806fc05-734a-4d45-a6e7-bba95b1da50e  rack1
+UN  172.17.0.2  12.06 MiB  256          49.6%             ce5d5f12-14a1-4af5-93d9-cce3b4a8875f  rack1
+
+
+
+kzdunczy@loch-70 ~ % docker kill cas2
+cas2
+kzdunczy@loch-70 ~ % docker rm -f cas2
+cas2
+
+
+
+root@f7b1b5662eac:/# nodetool removenode 5806fc05-734a-4d45-a6e7-bba95b1da50e
+
+
+
+cqlsh> ALTER KEYSPACE keyspace1 WITH replication = {'class': 'SimpleStrategy', 'replication_factor':2};
+cqlsh> CONSISTENCY TWO 
+Consistency level set to TWO.
+cqlsh> SELECT count(*) FROM keyspace1.standard1 ;
+NoHostAvailable: 
+
+
+
+
+
+
+
+
+
+
+
+
+kzdunczy@loch-70 ~ % docker run -d --name cas2 -e CASSANDRA_SEEDS=172.17.0.2 cassandra
+6ff3860c7ceca0b31b97a05b1af5431bb566fb1c49dc903c6389b5b1ecb71626
+
+
+
+
+kzdunczy@loch-70 ~ % docker exec -it cas2 /bin/bash       
+#wypiecie i usuniecie                            
+root@6ff3860c7cec:/# nodetool decommission
+
+
+
+ python3.5 -m venv EN
+kzdunczy@loch-70 ~ % source ENV/bin/activate
+kzdunczy@loch-70 ~ % CASS_DRIVER_NO_CYTHON=1 pip3 install cassandra-driver
+
+rehash
+which jupyter
+
+
+kzdunczy@loch-70 ~ % ipython kernel install --user --name=ENV
+Installed kernelspec ENV in /home/mion/s/234/kzdunczy/.local/share/jupyter/kernels/env
+
+
+
+
+from cassandra.cluster import Cluster 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
