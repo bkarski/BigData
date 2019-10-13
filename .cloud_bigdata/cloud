@@ -1,0 +1,83 @@
+Notatki z Big Data w chmurze
+13.10.2019
+
+
+HUE
+http://ec2-34-229-72-246.compute-1.amazonaws.com:8888/hue/editor?editor=5
+
+
+show databases;
+create database movielens;
+
+show tables;
+
+
+DROP TABLE IF EXISTS movies;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS movies (
+MovieID INT,
+Title STRING,
+Genres STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '@';
+
+Dane do warsztatów
+http://tiny.cc/wfbm3y
+
+https://www.dropbox.com/sh/brjcq9xlms3xcsr/AAAqXkpOJBnzBPaqq_S3qklka?dl=0
+
+
+LOAD DATA INPATH '/user/hadoop/movies.dat'
+OVERWRITE INTO TABLE movies;
+
+select * from movies limit 100;
+
+
+drop table if exists moviess3;
+
+CREATE external TABLE moviess3 (MovieID INT, Title STRING, Genres STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '@'
+STORED AS
+INPUTFORMAT 'com.amazonaws.emr.s3select.hive.S3SelectableTextInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION 's3://awseducate-karol/movielens/movies/'
+TBLPROPERTIES ( "s3select.format" = "csv", "s3select.headerInfo" = "ignore" );
+
+
+select * from movies limit 100;
+
+
+Azure
+
+https://portal.azure.com/
+
+student@radoslawszmitgmail.onmicrosoft.com
+Politechnika2019!
+
+
+
+
+
+pip3 install awscli --upgrade --user
+aws --version
+
+alias aws='~/.local/bin/aws'
+
+vi ~/.aws/credentials
+
+[default]
+aws_access_key_id=ddddddd
+aws_secret_access_key=cdddddd
+
+
+aws s3 ls
+
+
+
+https://databricks.com/resources/type/example-notebook
+
+http://it-filolog.pl/data-lake-repozytorium-do-przechowywania-zarzadzania-i-zaawansowanej-analizy-danych/
+
+
+
+
+
