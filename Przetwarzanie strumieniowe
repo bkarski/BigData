@@ -1,0 +1,64 @@
+# 27/10/2019 przetwarzanie strumieniowe
+
+#download docker image from https://hub.docker.com
+
+docker pull httpd
+
+mkdir /temp/dane1234
+
+docker run -d -rm -p 8081:80 -v /tmp/dane1234:dane httpd
+
+docker ps
+
+dcoker exec -it <container_id> /bin/bash
+
+cd /dane
+
+touch test
+
+# new terminal
+
+cd /tmp/dane1234
+ls -l
+
+# back to firs terminal
+
+ls
+
+exit
+
+docker ps
+
+docker stop <container_id>
+
+docker ps
+
+docker images
+
+
+
+###########################################################################
+docker run -d -rm -p 8081:80 httpd
+
+docker images
+
+docker ps
+
+docker ps -a
+
+docker stop <container_id>
+
+docker start <container_id>
+
+docker logs <container_id>
+
+docker exec -it <container_id> /bin/bash
+
+#Delete container
+docker rm <container_id>
+
+docker rm $(docker ps -aq) /* powershell */
+
+docker rm 'docker ps -aq' /* linux, mac */
+
+
